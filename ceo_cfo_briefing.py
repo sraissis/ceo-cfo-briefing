@@ -70,20 +70,12 @@ RSS_FEEDS = [
     "https://www.ecb.europa.eu/rss/press.html",
     # Euronews Business
     "https://www.euronews.com/rss?format=mrss&level=theme&name=business",
-    # European Commission
-    "https://ec.europa.eu/commission/presscorner/api/rss",
     # Les Echos (French Financial)
     "https://feeds.lesechos.fr/lesechos-finance",
     # Handelsblatt (German Financial)
     "https://www.handelsblatt.com/contentexport/feed/schlagzeilen",
-    # El Economista (Spanish Financial)
-    "https://www.eleconomista.es/rss/rss-mercados-financieros.php",
-    # Börsen-Zeitung (German Markets)
-    "https://www.boersen-zeitung.de/rss",
     # Private Equity International
     "https://www.privateequityinternational.com/feed/",
-    # Mergermarket
-    "https://www.mergermarket.com/rss",
 ]
 
 def fetch_articles(feeds, max_per_feed=5):
@@ -121,21 +113,21 @@ Content: {a.get('summary', 'No content available')}
                 "role": "user",
                 "content": f"""You are a senior market analyst preparing a confidential daily briefing for the CEO and CFO of Open Gate Capital, a global private equity firm specializing in industrial corporate carve-outs across North America and Europe.
 
-Open Gate Capital's CURRENT UNREALIZED portfolio companies are:
-- Aluminium Solutions Group (France) — aluminium extrusion, building/construction/transport sectors
-- Annex Cloud (USA) — SaaS customer loyalty platform
-- CoreMedia AG (Germany) — digital experience and web content management software
-- Duraco (USA) — specialty tapes, labels, and coated films
-- Fichet Security Solutions (Europe) — security doors, safes, vaults, cash handling
-- Hufcor (USA) — operable partitions for hotels, convention centers, schools
-- Integrity Partners Group (USA) — specialty chemical distribution
-- Jøtul (Norway) — cast iron stoves and fireplaces, consumer heating
-- Kongsberg Precision Cutting Systems (Europe) — digital cutting systems for packaging and signage
-- Mersive Technologies (USA) — meeting collaboration software
-- Sargent and Greenleaf (USA) — high security locks and access control
-- ScioTeq (Europe/USA) — visualization solutions for air traffic control and defense
-- TREALITY (USA/Europe) — simulation visual display systems
-- Total Safety EMEA (latest acquisition, April 2026) — industrial safety services
+IMPORTANT: The following is the COMPLETE and ACCURATE list of Open Gate Capital's CURRENT unrealized portfolio companies as of 2026. Do NOT reference any companies outside of this list when discussing portfolio holdings or actionable intelligence:
+
+- Aluminium Solutions Group (France) — aluminium extrusion, building/construction/transport sectors. Formed from merger of Extol and Aluminium France Extrusion in 2022
+- Annex Cloud (USA) — SaaS customer loyalty and retention platform
+- CoreMedia AG (Germany) — digital experience and web content management software, headquartered in Hamburg
+- Duraco (USA) — specialty tapes, labels, and coated films, headquartered in Forest Park, Illinois
+- Fichet Security Solutions (Europe) — security doors, safes, vaults, cash handling, France/Belgium/Luxembourg
+- Hufcor (USA) — operable partitions for hotels, convention centers, schools, global manufacturing
+- Integrity Partners Group (USA) — specialty chemical distribution, headquartered in Roanoke, Virginia
+- Jøtul (Norway) — cast iron stoves and fireplaces, consumer heating, sells in 45 countries
+- Kongsberg Precision Cutting Systems (Europe) — digital cutting systems for packaging and signage, global operations
+- Mersive Technologies (USA) — meeting collaboration software, headquartered in Denver, Colorado
+- Sargent and Greenleaf (USA) — high security locks and access control (note: security locking division sold to ASSA ABLOY December 2025, remaining business still held)
+- TREALITY (USA/Europe) — simulation visual display systems, headquartered in Ohio
+- Total Safety/Apex (acquired April 2026) — industrial safety services in Europe, Middle East and Africa
 
 Open Gate Capital focuses on: chemicals and minerals, packaging, paper and specialty materials, diversified industrials, metals, building products, aerospace and defense, automotive, business and industrial services. The firm is actively expanding its European presence while maintaining a strong US portfolio. It specializes in corporate carve-outs and divestitures in the lower middle market.
 
@@ -194,8 +186,10 @@ EUROPE:
 6. ACTIONABLE INTELLIGENCE FOR OPEN GATE CAPITAL
 Based on this week's news, identify 3-5 specific near-term actions directly tied to OpenGate's current unrealized portfolio companies listed above. These should be things the team can act on or investigate this week — not long term strategy.
 
-Frame each as a direct recommendation tied to a specific portfolio company or sector:
-- "CHECK IN WITH [portfolio company] on..." 
+Only reference companies from the current portfolio list above. Do not mention any realized or exited companies.
+
+Frame each as a direct recommendation tied to a specific portfolio company:
+- "CHECK IN WITH [portfolio company] on..."
 - "MONITOR [portfolio company] exposure to..."
 - "EXPLORE whether [portfolio company] can benefit from..."
 - "REVIEW [portfolio company] position given..."
@@ -264,7 +258,7 @@ def run_morning_briefing():
     print("Sending to Power Automate...")
     send_email(briefing)
 
-schedule.every().day.at("08:30").do(run_morning_briefing)
+schedule.every().day.at("10:30").do(run_morning_briefing)
 
 if __name__ == "__main__":
     print("CEO/CFO briefing agent started.")
