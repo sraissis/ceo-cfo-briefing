@@ -95,6 +95,9 @@ def fetch_articles(feeds, max_per_feed=5):
             continue
     return articles
 
+def is_friday():
+    return datetime.now().weekday() == 4
+
 def generate_briefing(articles):
     articles_text = ""
     for i, a in enumerate(articles, 1):
@@ -105,14 +108,7 @@ Published: {a.get('published', 'N/A')}
 Content: {a.get('summary', 'No content available')}
 ---"""
 
-    response = client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=4000,
-        messages=[
-            {
-                "role": "user",
-                "content": f"""You are a senior market analyst preparing a confidential daily briefing for the CEO and CFO of Open Gate Capital, a global private equity firm specializing in industrial corporate carve-outs across North America and Europe.
-
+    portfolio_context = """
 IMPORTANT: The following is the COMPLETE and ACCURATE list of Open Gate Capital's CURRENT unrealized portfolio companies as of 2026. Do NOT reference any companies outside of this list when discussing portfolio holdings or actionable intelligence:
 
 - Aluminium Solutions Group (France) — aluminium extrusion, building/construction/transport sectors. Formed from merger of Extol and Aluminium France Extrusion in 2022
@@ -122,14 +118,71 @@ IMPORTANT: The following is the COMPLETE and ACCURATE list of Open Gate Capital'
 - Fichet Security Solutions (Europe) — security doors, safes, vaults, cash handling, France/Belgium/Luxembourg
 - Hufcor (USA) — operable partitions for hotels, convention centers, schools, global manufacturing
 - Integrity Partners Group (USA) — specialty chemical distribution, headquartered in Roanoke, Virginia
-- Jøtul (Norway) — cast iron stoves and fireplaces, consumer heating, sells in 45 countries
 - Kongsberg Precision Cutting Systems (Europe) — digital cutting systems for packaging and signage, global operations
 - Mersive Technologies (USA) — meeting collaboration software, headquartered in Denver, Colorado
 - Sargent and Greenleaf (USA) — high security locks and access control (note: security locking division sold to ASSA ABLOY December 2025, remaining business still held)
 - TREALITY (USA/Europe) — simulation visual display systems, headquartered in Ohio
 - Total Safety/Apex (acquired April 2026) — industrial safety services in Europe, Middle East and Africa
 
-Open Gate Capital focuses on: chemicals and minerals, packaging, paper and specialty materials, diversified industrials, metals, building products, aerospace and defense, automotive, business and industrial services. The firm is actively expanding its European presence while maintaining a strong US portfolio. It specializes in corporate carve-outs and divestitures in the lower middle market.
+Open Gate Capital focuses on: chemicals and minerals, packaging, paper and specialty materials, diversified industrials, metals, building products, aerospace and defense, automotive, business and industrial services. The firm is actively expanding its European presence while maintaining a strong US portfolio. It specializes in corporate carve-outs and divestitures in the lower middle market."""
+
+    if is_friday():
+        prompt = f"""You are a senior market analyst preparing a confidential WEEKLY WRAP-UP briefing for the CEO and CFO of Open Gate Capital, a global private equity firm specializing in industrial corporate carve-outs across North America and Europe.
+
+{portfolio_context}
+
+Today is {datetime.now().strftime('%A, %B %d, %Y')} — end of week summary.
+
+Below are {len(articles)} articles from major financial news sources gathered this week.
+
+{articles_text}
+
+Please provide a concise WEEKLY WRAP-UP covering these five sections. Use short bullet points only — no paragraphs, no full sentences where possible.
+
+Do not include a title, header, or date at the top. Start directly with section 1.
+Do not use any Markdown formatting such as **, *, #, or ##.
+For section headers use ALL CAPS only.
+
+TOP 3 HEADLINES THIS WEEK
+- [Single line — most important story of the week]
+- [Single line — second most important story]
+- [Single line — third most important story]
+
+1. MACRO RECAP — WEEK IN REVIEW
+- Key market moves for the week: US and European indices, rates, FX, oil
+- Most significant macro events or data releases this week
+- Week-over-week change in sentiment vs last week
+
+2. DEAL MARKET — WEEK IN REVIEW
+- Notable M&A and PE transactions announced this week
+- Corporate carve-out and divestiture activity this week
+- Credit market conditions heading into next week
+
+3. INDUSTRIALS — WEEK IN REVIEW
+- Most important sector developments this week across OpenGate's sectors
+- Supply chain, input cost, and demand signals
+- Any major earnings or corporate events relevant to OpenGate's sectors
+
+4. EUROPEAN MARKET — WEEK IN REVIEW
+- Key European macro and political developments this week
+- European industrial and M&A activity this week
+- Currency movements and cross-border deal implications
+
+5. LOOKING AHEAD — NEXT WEEK
+- Key events, data releases, and catalysts to watch next week
+- Any specific risks or opportunities OpenGate should prepare for
+- 2-3 actionable items for the team to focus on next week tied to current portfolio companies
+
+At the very end, include a single consolidated sources list:
+SOURCES:
+- Article Title: article url
+
+Include every article referenced, listed once only."""
+
+    else:
+        prompt = f"""You are a senior market analyst preparing a confidential daily briefing for the CEO and CFO of Open Gate Capital, a global private equity firm specializing in industrial corporate carve-outs across North America and Europe.
+
+{portfolio_context}
 
 Today is {datetime.now().strftime('%A, %B %d, %Y')}.
 
@@ -139,10 +192,8 @@ Below are {len(articles)} articles from major financial news sources gathered th
 
 Please provide a concise executive briefing covering exactly these six sections. The CEO and CFO should be able to read this in under 2 minutes. Use short bullet points only — no paragraphs, no full sentences where possible.
 
-Do not include a title, header, or date at the top. Start directly with section 1.
-
-Do not use any Markdown formatting such as **, *, #, or ##. Do not use double asterisks around any text.
-
+Do not include a title, header, or date at the top. Start directly with the Top 3 Headlines.
+Do not use any Markdown formatting such as **, *, #, or ##.
 For section headers use ALL CAPS only — no special characters around them.
 For sub-headers within sections use ALL CAPS followed by a colon, like this: US: or EUROPE:
 
@@ -150,15 +201,22 @@ Keep each section tight and scannable:
 - Sections 1, 2, 4, 5 and 6: maximum 4-6 bullet points total
 - Section 3 (Industrials): up to 10 bullet points, grouped by subsector
 
+TOP 3 HEADLINES
+- [Single line — most critical thing to know today]
+- [Single line — second most critical thing]
+- [Single line — third most critical thing]
+
 1. MACRO SNAPSHOT
 - Key market moves: US and European indices, rates, FX, oil
 - Fed/ECB/BoE policy signals
 - Any macro data releases today
+- WEEK-OVER-WEEK: note one key change in macro conditions vs last week
 
 2. DEAL MARKET CONDITIONS
 - M&A and PE deal flow — volume, valuations, financing conditions
 - Corporate carve-out and divestiture activity
 - European deal market specifically
+- WEEK-OVER-WEEK: note one key change in deal conditions vs last week
 
 3. INDUSTRIALS SECTOR WATCH
 - News directly relevant to OpenGate's sectors: chemicals, specialty materials, building products, aerospace/defense, industrial technology, automotive
@@ -175,13 +233,11 @@ Keep each section tight and scannable:
 US:
 - US leveraged lending conditions, spreads, issuance volumes
 - US direct lending and private credit fund activity
-- Any notable US credit market developments affecting PE financing
 
 EUROPE:
 - European leveraged finance and syndicated loan market conditions
 - European private credit and direct lending activity
 - ECB policy impact on credit markets
-- Any notable European credit developments affecting cross-border deals
 
 6. ACTIONABLE INTELLIGENCE FOR OPEN GATE CAPITAL
 Based on this week's news, identify 3-5 specific near-term actions directly tied to OpenGate's current unrealized portfolio companies listed above. These should be things the team can act on or investigate this week — not long term strategy.
@@ -195,24 +251,34 @@ Frame each as a direct recommendation tied to a specific portfolio company:
 - "REVIEW [portfolio company] position given..."
 - "CONSIDER add-on acquisition for [portfolio company] given..."
 
-Be specific — reference actual news from today's articles where possible.
-
-At the very end of the briefing, after all six sections, include a single consolidated sources list like this:
+At the very end of the briefing, after all six sections, include a single consolidated sources list:
 
 SOURCES:
 - Article Title: article url
 
 Include every article you referenced anywhere in the briefing, but list each one only once. Do not put sources under individual sections."""
+
+    response = client.messages.create(
+        model="claude-opus-4-5",
+        max_tokens=4000,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
             }
         ]
     )
     return response.content[0].text
 
 def send_email(briefing):
+    is_friday_today = is_friday()
+    subject_prefix = "Weekly Wrap-Up" if is_friday_today else "Executive Market Briefing"
+    header_title = "WEEKLY MARKET WRAP-UP" if is_friday_today else "EXECUTIVE MARKET BRIEFING"
+
     html_content = f"""<html>
 <body style="font-family: Georgia, serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #1a1a1a;">
 <div style="background-color: #0C1C3E; padding: 30px;">
-<h1 style="color: #ffffff; margin: 0; font-size: 24px;">EXECUTIVE MARKET BRIEFING</h1>
+<h1 style="color: #ffffff; margin: 0; font-size: 24px;">{header_title}</h1>
 <p style="color: #a8b8d8; margin: 8px 0 0 0; font-size: 16px;">{datetime.now().strftime('%A, %B %d, %Y')}</p>
 <p style="color: #a8b8d8; margin: 4px 0 0 0; font-size: 13px;">Prepared for Open Gate Capital</p>
 </div>
@@ -225,7 +291,7 @@ def send_email(briefing):
 
     payload = {
         "briefing": html_content,
-        "subject": f"Executive Market Briefing — {datetime.now().strftime('%B %d, %Y')}"
+        "subject": f"{subject_prefix} — {datetime.now().strftime('%B %d, %Y')}"
     }
 
     try:
@@ -239,8 +305,9 @@ def send_email(briefing):
         print(f"Error sending briefing: {e}")
 
 def run_morning_briefing():
+    day_type = "Weekly Wrap-Up" if is_friday() else "Daily Briefing"
     print(f"\n{'='*60}")
-    print(f"  CEO/CFO Briefing — {datetime.now().strftime('%B %d, %Y %I:%M %p')}")
+    print(f"  CEO/CFO {day_type} — {datetime.now().strftime('%B %d, %Y %I:%M %p')}")
     print(f"{'='*60}\n")
 
     print("Fetching articles...")
@@ -258,7 +325,7 @@ def run_morning_briefing():
     print("Sending to Power Automate...")
     send_email(briefing)
 
-schedule.every().day.at("10:30").do(run_morning_briefing)
+schedule.every().day.at("11:30").do(run_morning_briefing)
 
 if __name__ == "__main__":
     print("CEO/CFO briefing agent started.")
